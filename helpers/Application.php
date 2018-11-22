@@ -264,7 +264,7 @@ END;
             return false;
         }
 
-        if ($recurse !== 0) {
+        if ($recurse !== 0) {   // Unravel our function stack
             return true;
         }
 
