@@ -15,7 +15,8 @@
 
 namespace CarbonPHP;
 
-use CarbonPHP\helpers\Serialized;
+use CarbonPHP\Helpers\Serialized;
+use CarbonPHP\Table\sessions;
 
 class Session implements \SessionHandlerInterface
 {
@@ -50,7 +51,7 @@ class Session implements \SessionHandlerInterface
         ini_set('session.use_strict_mode', 1);
 
         if ($ip === false) {
-            print 'CarbonPHP has detected ip spoofing.';
+            print 'Carbon has detected ip spoofing.';
             die(0);
         }
 
@@ -74,7 +75,7 @@ class Session implements \SessionHandlerInterface
 
     /**
      *   Pauses the current session. This is required if you plan to fork you process and
-     *   continue witSh session manipulation.
+     *   continue with session manipulation.
      */
     public static function pause()
     {
@@ -154,8 +155,9 @@ class Session implements \SessionHandlerInterface
             $id = session_id();
             $_SESSION = array();
             session_write_close();
-            $db = Database::database();
-            $db->prepare('DELETE FROM sessions WHERE session_id = ?')->execute([$id]);
+            # $db = Database::database();
+            # $db->prepare('DELETE FROM sessions WHERE session_id = ?')->execute([$id]);
+            sessions::Delete($_SESSION,$id,[]);
             session_start();
         } catch (\PDOException $e) {
             sortDump($e);

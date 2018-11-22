@@ -31,6 +31,7 @@ namespace {                                     // This runs the following code 
      */
     function startApplication($reset = false): bool
     {
+        #global $json;
         static $application;
 
         if (null === $application) {
@@ -47,7 +48,12 @@ namespace {                                     // This runs the following code 
                 return true;
             }
             $reset = false;
-        }
+        } #else {
+            #sort($json);
+           # $json['header'] = null;
+            #sortDump($json);
+        #}
+
 
         if ($reset):                                    // This will always be se in a socket
             if ($reset === true):
@@ -148,15 +154,22 @@ namespace {                                     // This runs the following code 
             } catch (Exception | Error $e) {
                 if (!$e instanceof PublicAlert) {
                     PublicAlert::danger('Developers make mistakes, and you found a big one! We\'ve logged this event and will be investigating soon.'); // TODO - Change what is logged
+                    if (APP_LOCAL) {
+                        PublicAlert::warning($e->getMessage());
+                    }
+                    try {
+                        ErrorCatcher::generateLog($e);
+                    } catch (\Throwable $e) {
+                        PublicAlert::danger('Error handling failed.');
+                        print $e->getMessage();
+                        PublicAlert::info(json_encode($e));
 
-                    #ErrorCatcher::generateLog($e);     // TODO -- we didnt log it noooooo
-                    var_dump($e);  // TODO -- clean this up when rest is working
-
+                    }
                 }
+                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
                 $argv = null;
             } finally {
-                if (ob_get_status()) {
-                    if (ob_get_length()) {
+                if (ob_get_status() && ob_get_length()) {
                         $out = ob_get_contents();
                         ob_end_clean();
                         print <<<END
@@ -166,7 +179,6 @@ namespace {                                     // This runs the following code 
                                 <a href="http://carbonphp.com/">Note: All MVC routes are wrapped in this function. Output to the browser should be done within the view! Use this as a reporting tool only.</a>
                                 </div><pre>$out</pre>
 END;
-                    }
 
                 }
                 Entities::verify();     // Check that all database commit chains have finished successfully, otherwise attempt to remove
@@ -252,7 +264,7 @@ END;
         $CLASS = $class;
         $METHOD = $method;
 
-        if (!isset($APPLICATION)) {
+        if ($APPLICATION === null) {
             $APPLICATION = $recurse = 0;
         } else {
             $recurse = $APPLICATION;
@@ -339,16 +351,23 @@ END;
 
         // Generate Report
         ob_start();
-        print '####################### VAR DUMP ########################<br><pre>';
+        print '<pre>';
+        /** @noinspection ForgottenDebugOutputInspection */
+        var_dump(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,2)[1]);
+        print '</pre>';
+        print PHP_EOL . '####################### VAR DUMP ########################<br><pre>';
+        /** @noinspection ForgottenDebugOutputInspection */
         var_dump($mixed);
         print '</pre><br><br><br>';
         if ($fullReport) {
             echo '####################### MIXED DUMP ########################<br><pre>';
             $mixed = (\is_array($mixed) && \count($mixed) === 1 ? array_pop($mixed) : $mixed);
             echo '<pre>';
+            /** @noinspection ForgottenDebugOutputInspection */
             debug_zval_dump($mixed ?: $GLOBALS);
             echo '</pre><br><br>';
             echo '####################### BACK TRACE ########################<br><pre>';
+            /** @noinspection ForgottenDebugOutputInspection */
             var_dump(debug_backtrace());
             echo '</pre>';
         }
