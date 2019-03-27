@@ -22,7 +22,18 @@ class BuildDatabase implements iCommand
 
     public function run($argv) : void
     {
-        $dump = file_get_contents($this->MySQLDump());
+        $argc = count($argv);
+
+
+        for ($i=0;$i<$argc;$i++){
+            switch($argv[$i]){
+                case '-mysqldump':
+                    $mysqldump = $argv[++$i];
+                    break;
+            }
+        }
+
+        $dump = file_get_contents($this->MySQLDump($mysqldump ?? null));
 
         if (!preg_match_all('#DROP TABLE IF EXISTS `(.+)`;([^-])+#', $dump, $matches)) {
             print 'No tables matched in MySQL Dump. It does not look like CarbonPHP is setup correctly. Run `>> php index.php setup` to fix this.' . PHP_EOL;
@@ -101,7 +112,7 @@ TEXT;
         $tags = <<<TAGS
 Try {
     \$sql = <<<END
-REPLACE INTO carbon_tags (tag_id, tag_description, tag_name) VALUES (?,?,?);
+REPLACE INTO tags (tag_id, tag_description, tag_name) VALUES (?,?,?);
 END;
      \$tag = [
 TAGS;
